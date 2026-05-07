@@ -229,3 +229,19 @@ def toggle_favorite(id):
     fav_count = Favorite.get_count_by_recipe(id)
     
     return jsonify({"status": status, "fav_count": fav_count})
+@recipe_bp.route("/recipe/fitness", methods=["GET"])
+def fitness_search():
+    """健身食譜篩選：依增肌/減脂/維持目標顯示食譜。"""
+    goal = request.args.get("goal", "").strip()
+    # 實作時呼叫 Recipe.search_by_fitness(goal)
+    recipes = [] 
+    return render_template("recipe/index.html", recipes=recipes, fitness_goal=goal)
+
+
+@recipe_bp.route("/recipe/pregnancy", methods=["GET"])
+def pregnancy_search():
+    """孕婦食譜篩選：依孕期階段顯示安全食譜。"""
+    stage = request.args.get("stage", "").strip()
+    # 實作時呼叫 Recipe.search_by_pregnancy(stage)
+    recipes = []
+    return render_template("recipe/index.html", recipes=recipes, pregnancy_stage=stage)

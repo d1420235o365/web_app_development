@@ -29,6 +29,8 @@
 | 處理編輯食譜 | POST | `/recipe/<int:id>/edit` | — | 更新食譜資料，重導向詳細頁 |
 | 刪除食譜 | POST | `/recipe/<int:id>/delete` | — | 刪除食譜，重導向首頁 |
 | 收藏 / 取消收藏 | POST | `/recipe/<int:id>/favorite` | — | 切換收藏狀態，回傳 JSON 結果 |
+| 健身食譜篩選 | GET | `/recipe/fitness` | `recipe/index.html` | 依營養標籤篩選健身食譜 |
+| 孕婦食譜篩選 | GET | `/recipe/pregnancy` | `recipe/index.html` | 依孕期階段篩選安全食譜 |
 
 ### 👤 使用者（Blueprint: `user`，前綴 `/user`）
 
@@ -44,6 +46,7 @@
 | 使用者列表 | GET | `/admin/users` | `admin/users.html` | 列出所有使用者（需管理員） |
 | 刪除使用者 | POST | `/admin/users/<int:id>/delete` | — | 強制刪除使用者帳號（需管理員） |
 | 食譜管理列表 | GET | `/admin/recipes` | `admin/recipes.html` | 列出所有食譜，含公開/私人狀態（需管理員） |
+| 核准食譜 | POST | `/admin/recipe/<int:id>/approve` | — | 設定食譜狀態為公開（需管理員） |
 | 強制刪除食譜 | POST | `/admin/recipe/<int:id>/delete` | — | 管理員刪除違規食譜（需管理員） |
 
 ---
@@ -169,6 +172,18 @@
 - **輸出**: 回傳 JSON `{"status": "added" | "removed"}`（供前端 JS 更新按鈕狀態）
 - **錯誤處理**: 未登入 → 回傳 JSON `{"error": "請先登入", "redirect": "/auth/login"}`
 
+#### `GET /recipe/fitness` — 健身食譜篩選
+- **輸入（Query String）**: `goal`（增肌 / 減脂 / 維持）
+- **處理邏輯**: `Recipe.search_by_fitness(goal)` 篩選符合標籤的食譜
+- **輸出**: 渲染 `recipe/index.html`，傳入過濾後的 `recipes`
+- **錯誤處理**: 無
+
+#### `GET /recipe/pregnancy` — 孕婦食譜篩選
+- **輸入（Query String）**: `stage`（初期 / 中期 / 晚期 / 產後）
+- **處理邏輯**: `Recipe.search_by_pregnancy(stage)` 篩選安全且符合階段的食譜
+- **輸出**: 渲染 `recipe/index.html`，傳入過濾後的 `recipes`
+- **錯誤處理**: 無
+
 ---
 
 ### 👤 User Blueprint
@@ -206,6 +221,12 @@
 - **處理邏輯**: `Recipe.get_all(public_only=False)` 取得全站食譜（含私人）
 - **輸出**: 渲染 `admin/recipes.html`，傳入 `recipes` list
 - **錯誤處理**: 非管理員 → `abort(403)`
+
+#### `POST /admin/recipe/<int:id>/approve` — 核准食譜（需管理員）
+- **輸入（URL）**: `id`
+- **處理邏輯**: `Recipe.update_status(id, 'approved')`
+- **輸出**: 重導向 `/admin/recipes`
+- **錯誤處理**: 不存在 → `abort(404)`
 
 #### `POST /admin/recipe/<int:id>/delete` — 強制刪除食譜（需管理員）
 - **輸入（URL）**: `id`

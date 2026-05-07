@@ -96,3 +96,14 @@ def delete_recipe(id):
     Recipe.delete(id)
     flash("食譜已強制刪除", "success")
     return redirect(url_for("admin.list_recipes"))
+@admin_bp.route("/recipe/<int:id>/approve", methods=["POST"])
+@admin_required
+def approve_recipe(id):
+    """核准食譜，將其狀態設為 approved（公開）。"""
+    recipe = Recipe.get_by_id(id)
+    if not recipe:
+        abort(404)
+        
+    # 實作時呼叫 Recipe.update(id, status='approved')
+    flash("食譜已核准公開", "success")
+    return redirect(url_for("admin.list_recipes"))
