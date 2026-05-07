@@ -1,109 +1,28 @@
-"""
-app/routes/admin.py
-管理後台 Blueprint — 提供管理員專屬的使用者與食譜管理功能。
-所有路由皆需要管理員權限（session["is_admin"] == True）。
+from flask import Blueprint, render_template, request, redirect, url_for, session
 
-路由清單：
-  GET  /admin/                          — 後台總覽面板（統計數字）
-  GET  /admin/users                     — 使用者列表
-  POST /admin/users/<int:id>/delete     — 刪除指定使用者
-  GET  /admin/recipes                   — 全站食譜列表（含私人）
-  POST /admin/recipe/<int:id>/delete    — 強制刪除指定食譜
-"""
+admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
-from flask import Blueprint, render_template, redirect, url_for, session, flash, abort
-from functools import wraps
-
-from app.models.user import User
-from app.models.recipe import Recipe
-
-admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
-
-
-# ---------------------------------------------------------------------------
-# 輔助：管理員權限檢查
-# ---------------------------------------------------------------------------
-
-def admin_required(f):
-    """裝飾器：確認使用者具有管理員身份，否則 abort(403)。"""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not session.get("is_admin"):
-            abort(403)
-        return f(*args, **kwargs)
-    return decorated_function
-
-
-# ---------------------------------------------------------------------------
-# 路由實作
-# ---------------------------------------------------------------------------
-
-@admin_bp.route("/", methods=["GET"])
-@admin_required
+@admin_bp.route('/dashboard')
 def dashboard():
-    """管理後台總覽面板。"""
-    users = User.get_all()
-    all_recipes = Recipe.get_all(public_only=False)
-    
-    user_count = len(users)
-    recipe_count = len(all_recipes)
-    recent_recipes = all_recipes[:5]
-    
-    return render_template("admin/dashboard.html", user_count=user_count, recipe_count=recipe_count, recent_recipes=recent_recipes)
+    """管理員後台概覽"""
+    pass
 
+@admin_bp.route('/book/add', methods=['GET', 'POST'])
+def add_book():
+    """新增書籍頁面與邏輯"""
+    pass
 
-@admin_bp.route("/users", methods=["GET"])
-@admin_required
-def list_users():
-    """使用者管理列表頁面。"""
-    users = User.get_all()
-    return render_template("admin/users.html", users=users)
+@admin_bp.route('/book/edit/<int:book_id>', methods=['GET', 'POST'])
+def edit_book(book_id):
+    """編輯書籍頁面與邏輯"""
+    pass
 
+@admin_bp.route('/book/delete/<int:book_id>', methods=['POST'])
+def delete_book(book_id):
+    """執行刪除書籍動作"""
+    pass
 
-@admin_bp.route("/users/<int:id>/delete", methods=["POST"])
-@admin_required
-def delete_user(id):
-    """強制刪除使用者帳號。"""
-    user = User.get_by_id(id)
-    if not user:
-        abort(404)
-        
-    if user["id"] == session["user_id"]:
-        flash("您無法刪除自己的帳號！", "danger")
-        return redirect(url_for("admin.list_users"))
-        
-    User.delete(id)
-    flash("使用者已刪除", "success")
-    return redirect(url_for("admin.list_users"))
-
-
-@admin_bp.route("/recipes", methods=["GET"])
-@admin_required
-def list_recipes():
-    """全站食譜管理列表頁面。"""
-    recipes = Recipe.get_all(public_only=False)
-    return render_template("admin/recipes.html", recipes=recipes)
-
-
-@admin_bp.route("/recipe/<int:id>/delete", methods=["POST"])
-@admin_required
-def delete_recipe(id):
-    """管理員強制刪除指定食譜。"""
-    recipe = Recipe.get_by_id(id)
-    if not recipe:
-        abort(404)
-        
-    Recipe.delete(id)
-    flash("食譜已強制刪除", "success")
-    return redirect(url_for("admin.list_recipes"))
-@admin_bp.route("/recipe/<int:id>/approve", methods=["POST"])
-@admin_required
-def approve_recipe(id):
-    """核准食譜，將其狀態設為 approved（公開）。"""
-    recipe = Recipe.get_by_id(id)
-    if not recipe:
-        abort(404)
-        
-    Recipe.update(id, status='approved')
-    flash("食譜已核准公開", "success")
-    return redirect(url_for("admin.list_recipes"))
+@admin_bp.route('/overdue')
+def overdue_list():
+    """顯示逾期清單"""
+    pass

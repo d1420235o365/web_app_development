@@ -1,11 +1,12 @@
-"""
-app/routes/__init__.py
-匯入所有 Blueprint，供 app/__init__.py 統一註冊。
-"""
+from flask import Blueprint
 
-from .auth import auth_bp
-from .recipe import recipe_bp
-from .user import user_bp
-from .admin import admin_bp
+def register_blueprints(app):
+    from .main import main_bp
+    from .auth import auth_bp
+    from .borrow import borrow_bp
+    from .admin import admin_bp
 
-__all__ = ["auth_bp", "recipe_bp", "user_bp", "admin_bp"]
+    app.register_blueprint(main_bp)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(borrow_bp)
+    app.register_blueprint(admin_bp)
