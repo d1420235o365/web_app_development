@@ -1,171 +1,79 @@
-# 資料庫設計文件 (DB_DESIGN) - 食譜收藏夾系統
+# 微型圖書館 (Mini Library) 資料庫設計文件
 
-本文件根據 PRD.md、FLOWCHART.md 與 ARCHITECTURE.md，定義 SQLite 資料庫的資料表結構、欄位說明與關聯設計。
+## 1. ER 圖 (Entity Relationship Diagram)
 
----
-
-## 1. ER 圖（實體關係圖）
+本系統包含三個核心實體：使用者 (User)、書籍 (Book) 與 借閱紀錄 (BorrowRecord)。
 
 ```mermaid
 erDiagram
-    USERS {
+    USER ||--o{ BORROW_RECORD : "initiates"
+    BOOK ||--o{ BORROW_RECORD : "is recorded in"
+    
+    USER {
         int id PK
-        string username
-        string email
-        string password_hash
-        bool is_admin
+        string username "唯一, 用於登入"
+        string password_hash "加密後的密碼"
+        string role "admin 或 borrower"
         datetime created_at
     }
-
-    RECIPES {
+    
+    BOOK {
         int id PK
-        int user_id FK
-        string title
-        text description
-        text steps
-        string category
-        string difficulty
-        int cook_time_minutes
-        float calories
-        float protein
-        float fat
-        float carbs
-        string fitness_tag
-        bool pregnancy_safe
-        string pregnancy_stage
-        string status
-        bool is_public
-        string cover_image
-        datetime created_at
-        datetime updated_at
-    }
-
-    INGREDIENTS {
-        int id PK
-        string name
-        bool is_pregnancy_warning
-    }
-
-    RECIPE_INGREDIENTS {
-        int id PK
-        int recipe_id FK
-        int ingredient_id FK
-        string quantity
-    }
-
-    FAVORITES {
-        int id PK
-        int user_id FK
-        int recipe_id FK
+        string title "書名"
+        string author "作者"
+        string isbn "ISBN 碼"
+        string category "分類"
+        string status "Available 或 Borrowed"
         datetime created_at
     }
-
-    USERS ||--o{ RECIPES : "建立"
-    USERS ||--o{ FAVORITES : "收藏"
-    RECIPES ||--o{ RECIPE_INGREDIENTS : "包含"
-    INGREDIENTS ||--o{ RECIPE_INGREDIENTS : "屬於"
-    RECIPES ||--o{ FAVORITES : "被收藏"
+    
+    BORROW_RECORD {
+        int id PK
+        int user_id FK "關聯 USER"
+        int book_id FK "關聯 BOOK"
+        datetime borrow_date "借閱日期"
+        datetime return_date "歸還日期 (可為空)"
+        string status "Active 或 Returned"
+    }
 ```
 
 ---
 
 ## 2. 資料表詳細說明
 
-### 2.1 `users` — 使用者
+### 2.1 USER (使用者表)
+| 欄位 | 型別 | 說明 | 必填 | 備註 |
+| :--- | :--- | :--- | :--- | :--- |
+| id | INTEGER | 流水編號 | 是 | PRIMARY KEY |
+| username | TEXT | 使用者名稱 | 是 | UNIQUE |
+| password_hash| TEXT | 雜湊密碼 | 是 | |
+| role | TEXT | 角色權限 | 是 | admin/borrower |
+| created_at | DATETIME | 建立時間 | 是 | DEFAULT CURRENT_TIMESTAMP |
 
-| 欄位名稱 | 型別 | 必填 | 說明 |
-| :--- | :--- | :---: | :--- |
-| `id` | INTEGER | ✅ | 主鍵，自動遞增 |
-| `username` | TEXT | ✅ | 使用者顯示名稱，全站唯一 |
-| `email` | TEXT | ✅ | 電子郵件，全站唯一，用於登入 |
-| `password_hash` | TEXT | ✅ | 使用 `werkzeug.security` 雜湊後的密碼，永不明文儲存 |
-| `is_admin` | INTEGER | ✅ | 管理員標記，0 = 一般使用者，1 = 管理員，預設為 0 |
-| `created_at` | TEXT | ✅ | 帳號建立時間，儲存 ISO 8601 格式字串 |
+### 2.2 BOOK (書籍表)
+| 欄位 | 型別 | 說明 | 必填 | 備註 |
+| :--- | :--- | :--- | :--- | :--- |
+| id | INTEGER | 流水編號 | 是 | PRIMARY KEY |
+| title | TEXT | 書名 | 是 | |
+| author | TEXT | 作者 | 否 | |
+| isbn | TEXT | ISBN 碼 | 否 | |
+| category | TEXT | 分類 | 否 | |
+| status | TEXT | 狀態 | 是 | Available/Borrowed |
+| created_at | DATETIME | 建立時間 | 是 | DEFAULT CURRENT_TIMESTAMP |
 
-- **Primary Key**: `id`
-- **唯一索引**: `username`, `email`
-
----
-
-### 2.2 `recipes` — 食譜
-
-| 欄位名稱 | 型別 | 必填 | 說明 |
-| :--- | :--- | :---: | :--- |
-| `id` | INTEGER | ✅ | 主鍵，自動遞增 |
-| `user_id` | INTEGER | ✅ | 外鍵，對應 `users.id`，代表建立者 |
-| `title` | TEXT | ✅ | 食譜名稱 |
-| `description` | TEXT | ❌ | 食譜簡介說明 |
-| `steps` | TEXT | ✅ | 料理步驟（JSON 格式字串儲存步驟陣列） |
-| `category` | TEXT | ❌ | 食譜分類（如：家常、甜點、健身） |
-| `difficulty` | TEXT | ❌ | 難易度（easy / medium / hard） |
-| `cook_time_minutes` | INTEGER | ❌ | 預計料理時間（分鐘） |
-| `calories` | REAL | ❌ | 熱量（大卡） |
-| `protein` | REAL | ❌ | 蛋白質（克） |
-| `fat` | REAL | ❌ | 脂肪（克） |
-| `carbs` | REAL | ❌ | 碳水化合物（克） |
-| `fitness_tag` | TEXT | ❌ | 健身目標標籤（增肌 / 減脂 / 維持） |
-| `pregnancy_safe` | INTEGER | ✅ | 孕婦安全標示，1 = 安全，0 = 需注意，預設為 1 |
-| `pregnancy_stage` | TEXT | ❌ | 推薦孕期階段（初期 / 中期 / 晚期 / 產後） |
-| `status` | TEXT | ✅ | 審核狀態（pending / approved / rejected），預設為 approved |
-| `is_public` | INTEGER | ✅ | 公開狀態，1 = 公開，0 = 私人，預設為 1 |
-| `cover_image` | TEXT | ❌ | 封面圖片路徑或 URL |
-| `created_at` | TEXT | ✅ | 建立時間，ISO 8601 格式 |
-| `updated_at` | TEXT | ✅ | 最後更新時間，ISO 8601 格式 |
-
-- **Primary Key**: `id`
-- **Foreign Key**: `user_id` → `users(id)`
-- **索引**: `user_id`, `is_public`, `category`
+### 2.3 BORROW_RECORD (借閱紀錄表)
+| 欄位 | 型別 | 說明 | 必填 | 備註 |
+| :--- | :--- | :--- | :--- | :--- |
+| id | INTEGER | 流水編號 | 是 | PRIMARY KEY |
+| user_id | INTEGER | 使用者 ID | 是 | FOREIGN KEY (users.id) |
+| book_id | INTEGER | 書籍 ID | 是 | FOREIGN KEY (books.id) |
+| borrow_date | DATETIME | 借閱時間 | 是 | DEFAULT CURRENT_TIMESTAMP |
+| return_date | DATETIME | 歸還時間 | 否 | |
+| status | TEXT | 紀錄狀態 | 是 | Active/Returned |
 
 ---
 
-### 2.3 `ingredients` — 食材
-
-| 欄位名稱 | 型別 | 必填 | 說明 |
-| :--- | :--- | :---: | :--- |
-| `id` | INTEGER | ✅ | 主鍵，自動遞增 |
-| `name` | TEXT | ✅ | 食材名稱，全站唯一（如：雞蛋、番茄） |
-| `is_pregnancy_warning` | INTEGER | ✅ | 孕期禁忌警示，1 = 有風險，0 = 安全，預設為 0 |
-
-- **Primary Key**: `id`
-- **唯一索引**: `name`（避免重複食材）
-
----
-
-### 2.4 `recipe_ingredients` — 食譜食材關聯（多對多中間表）
-
-| 欄位名稱 | 型別 | 必填 | 說明 |
-| :--- | :--- | :---: | :--- |
-| `id` | INTEGER | ✅ | 主鍵，自動遞增 |
-| `recipe_id` | INTEGER | ✅ | 外鍵，對應 `recipes.id` |
-| `ingredient_id` | INTEGER | ✅ | 外鍵，對應 `ingredients.id` |
-| `quantity` | TEXT | ❌ | 食材用量描述（如：2 顆、100g） |
-
-- **Primary Key**: `id`
-- **Foreign Keys**: `recipe_id` → `recipes(id)`、`ingredient_id` → `ingredients(id)`
-- **唯一複合索引**: `(recipe_id, ingredient_id)`（同一食譜不重複加同一食材）
-- **設計說明**: 此表實現「從食材組合搜尋食譜」的核心功能。透過 `GROUP BY` + `HAVING COUNT` 可查詢同時包含多種食材的食譜。
-
----
-
-### 2.5 `favorites` — 使用者收藏
-
-| 欄位名稱 | 型別 | 必填 | 說明 |
-| :--- | :--- | :---: | :--- |
-| `id` | INTEGER | ✅ | 主鍵，自動遞增 |
-| `user_id` | INTEGER | ✅ | 外鍵，對應 `users.id` |
-| `recipe_id` | INTEGER | ✅ | 外鍵，對應 `recipes.id` |
-| `created_at` | TEXT | ✅ | 收藏時間，ISO 8601 格式 |
-
-- **Primary Key**: `id`
-- **Foreign Keys**: `user_id` → `users(id)`、`recipe_id` → `recipes(id)`
-- **唯一複合索引**: `(user_id, recipe_id)`（一個使用者對一個食譜只能收藏一次）
-
----
-
-## 3. 關聯總覽
-
-| 關聯 | 類型 | 說明 |
-| :--- | :--- | :--- |
-| users → recipes | 一對多 (1:N) | 一位使用者可建立多個食譜 |
-| recipes ↔ ingredients | 多對多 (M:N) | 透過 recipe_ingredients 中間表實作 |
-| users ↔ recipes (收藏) | 多對多 (M:N) | 透過 favorites 中間表實作 |
+## 3. 關鍵設計選擇
+- **密碼安全**: 使用 `password_hash` 儲存，不存明碼。
+- **狀態管理**: 書籍狀態由 `BOOK.status` 直接記錄以便快速查詢；詳細歷史則由 `BORROW_RECORD` 追蹤。
+- **擴充性**: `role` 欄位採字串設計，未來可視需求增加 `superadmin` 或 `editor` 等角色。
