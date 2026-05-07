@@ -42,13 +42,14 @@ class Ingredient:
         return cursor.lastrowid
 
     @classmethod
-    def create(cls, name: str) -> int | None:
+    def create(cls, name: str, is_pregnancy_warning: bool = False) -> int | None:
         """
         直接建立新食材。若名稱已存在則回傳 None。
         一般情況建議使用 get_or_create()。
 
         Args:
-            name: 食材名稱
+            name:                 食材名稱
+            is_pregnancy_warning: 孕期禁忌警示，預設 False
 
         Returns:
             新食材的 id，若已存在則回傳 None。
@@ -56,7 +57,8 @@ class Ingredient:
         db = get_db()
         try:
             cursor = db.execute(
-                "INSERT INTO ingredients (name) VALUES (?)", (name.strip(),)
+                "INSERT INTO ingredients (name, is_pregnancy_warning) VALUES (?, ?)",
+                (name.strip(), int(is_pregnancy_warning)),
             )
             db.commit()
             return cursor.lastrowid
@@ -78,7 +80,7 @@ class Ingredient:
         """
         db = get_db()
         rows = db.execute(
-            "SELECT id, name FROM ingredients ORDER BY name ASC"
+            "SELECT id, name, is_pregnancy_warning FROM ingredients ORDER BY name ASC"
         ).fetchall()
         return [dict(row) for row in rows]
 
@@ -95,7 +97,7 @@ class Ingredient:
         """
         db = get_db()
         row = db.execute(
-            "SELECT id, name FROM ingredients WHERE id = ?", (ingredient_id,)
+            "SELECT id, name, is_pregnancy_warning FROM ingredients WHERE id = ?", (ingredient_id,)
         ).fetchone()
         return dict(row) if row else None
 
@@ -112,7 +114,7 @@ class Ingredient:
         """
         db = get_db()
         row = db.execute(
-            "SELECT id, name FROM ingredients WHERE name = ?", (name.strip(),)
+            "SELECT id, name, is_pregnancy_warning FROM ingredients WHERE name = ?", (name.strip(),)
         ).fetchone()
         return dict(row) if row else None
 
@@ -129,7 +131,7 @@ class Ingredient:
         """
         db = get_db()
         rows = db.execute(
-            "SELECT id, name FROM ingredients WHERE name LIKE ? ORDER BY name ASC",
+            "SELECT id, name, is_pregnancy_warning FROM ingredients WHERE name LIKE ? ORDER BY name ASC",
             (f"%{keyword.strip()}%",),
         ).fetchall()
         return [dict(row) for row in rows]
@@ -139,22 +141,37 @@ class Ingredient:
     # ------------------------------------------------------------------
 
     @classmethod
-    def update(cls, ingredient_id: int, name: str) -> bool:
+    def update(cls, ingredient_id: int, name: str = None, is_pregnancy_warning: bool = None) -> bool:
         """
-        更新食材名稱。
+        更新食材。
 
         Args:
-            ingredient_id: 食材 id
-            name:          新名稱
+            ingredient_id:        食材 id
+            name:                 新名稱
+            is_pregnancy_warning: 孕期禁忌警示
 
         Returns:
-            True 表示成功，False 表示失敗（如名稱已被使用）。
+            True 表示成功，False 表示失敗。
         """
         db = get_db()
+        fields = []
+        values = []
+
+        if name is not None:
+            fields.append("name = ?")
+            values.append(name.strip())
+        if is_pregnancy_warning is not None:
+            fields.append("is_pregnancy_warning = ?")
+            values.append(int(is_pregnancy_warning))
+
+        if not fields:
+            return False
+
         try:
+            values.append(ingredient_id)
             db.execute(
-                "UPDATE ingredients SET name = ? WHERE id = ?",
-                (name.strip(), ingredient_id),
+                f"UPDATE ingredients SET {', '.join(fields)} WHERE id = ?",
+                values,
             )
             db.commit()
             return True

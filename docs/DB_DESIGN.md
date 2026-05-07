@@ -26,6 +26,14 @@ erDiagram
         string category
         string difficulty
         int cook_time_minutes
+        float calories
+        float protein
+        float fat
+        float carbs
+        string fitness_tag
+        bool pregnancy_safe
+        string pregnancy_stage
+        string status
         bool is_public
         string cover_image
         datetime created_at
@@ -35,6 +43,7 @@ erDiagram
     INGREDIENTS {
         int id PK
         string name
+        bool is_pregnancy_warning
     }
 
     RECIPE_INGREDIENTS {
@@ -90,6 +99,14 @@ erDiagram
 | `category` | TEXT | ❌ | 食譜分類（如：家常、甜點、健身） |
 | `difficulty` | TEXT | ❌ | 難易度（easy / medium / hard） |
 | `cook_time_minutes` | INTEGER | ❌ | 預計料理時間（分鐘） |
+| `calories` | REAL | ❌ | 熱量（大卡） |
+| `protein` | REAL | ❌ | 蛋白質（克） |
+| `fat` | REAL | ❌ | 脂肪（克） |
+| `carbs` | REAL | ❌ | 碳水化合物（克） |
+| `fitness_tag` | TEXT | ❌ | 健身目標標籤（增肌 / 減脂 / 維持） |
+| `pregnancy_safe` | INTEGER | ✅ | 孕婦安全標示，1 = 安全，0 = 需注意，預設為 1 |
+| `pregnancy_stage` | TEXT | ❌ | 推薦孕期階段（初期 / 中期 / 晚期 / 產後） |
+| `status` | TEXT | ✅ | 審核狀態（pending / approved / rejected），預設為 approved |
 | `is_public` | INTEGER | ✅ | 公開狀態，1 = 公開，0 = 私人，預設為 1 |
 | `cover_image` | TEXT | ❌ | 封面圖片路徑或 URL |
 | `created_at` | TEXT | ✅ | 建立時間，ISO 8601 格式 |
@@ -107,6 +124,7 @@ erDiagram
 | :--- | :--- | :---: | :--- |
 | `id` | INTEGER | ✅ | 主鍵，自動遞增 |
 | `name` | TEXT | ✅ | 食材名稱，全站唯一（如：雞蛋、番茄） |
+| `is_pregnancy_warning` | INTEGER | ✅ | 孕期禁忌警示，1 = 有風險，0 = 安全，預設為 0 |
 
 - **Primary Key**: `id`
 - **唯一索引**: `name`（避免重複食材）

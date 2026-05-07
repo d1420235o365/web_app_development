@@ -34,6 +34,14 @@ CREATE TABLE IF NOT EXISTS recipes (
     category            TEXT,                      -- 例如: 家常 / 甜點 / 健身
     difficulty          TEXT,                      -- 值域: easy / medium / hard
     cook_time_minutes   INTEGER,
+    calories            REAL,
+    protein             REAL,
+    fat                 REAL,
+    carbs               REAL,
+    fitness_tag         TEXT,                      -- 例如: 增肌 / 減脂 / 維持
+    pregnancy_safe      INTEGER NOT NULL DEFAULT 1, -- 1: 安全, 0: 需注意
+    pregnancy_stage     TEXT,                      -- 初期 / 中期 / 晚期 / 產後
+    status              TEXT NOT NULL DEFAULT 'approved', -- pending / approved / rejected
     is_public           INTEGER NOT NULL DEFAULT 1, -- 1: 公開, 0: 私人
     cover_image         TEXT,
     created_at          TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%S', 'now', 'localtime')),
@@ -51,7 +59,8 @@ CREATE INDEX IF NOT EXISTS idx_recipes_title     ON recipes(title);
 -- -------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS ingredients (
     id      INTEGER PRIMARY KEY AUTOINCREMENT,
-    name    TEXT    NOT NULL UNIQUE               -- 食材名稱全站唯一
+    name    TEXT    NOT NULL UNIQUE,               -- 食材名稱全站唯一
+    is_pregnancy_warning INTEGER NOT NULL DEFAULT 0 -- 1: 有風險, 0: 安全
 );
 
 CREATE INDEX IF NOT EXISTS idx_ingredients_name ON ingredients(name);

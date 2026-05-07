@@ -34,6 +34,14 @@ class Recipe:
         category: str = None,
         difficulty: str = None,
         cook_time_minutes: int = None,
+        calories: float = None,
+        protein: float = None,
+        fat: float = None,
+        carbs: float = None,
+        fitness_tag: str = None,
+        pregnancy_safe: bool = True,
+        pregnancy_stage: str = None,
+        status: str = 'approved',
         is_public: bool = True,
         cover_image: str = None,
         ingredients: list[dict] = None,
@@ -61,16 +69,18 @@ class Recipe:
         steps_json = json.dumps(steps, ensure_ascii=False)
 
         try:
-            cursor = db.execute(
-                """
                 INSERT INTO recipes
                     (user_id, title, description, steps, category, difficulty,
-                     cook_time_minutes, is_public, cover_image, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     cook_time_minutes, calories, protein, fat, carbs, 
+                     fitness_tag, pregnancy_safe, pregnancy_stage, status,
+                     is_public, cover_image, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     user_id, title, description, steps_json, category, difficulty,
-                    cook_time_minutes, int(is_public), cover_image, now, now,
+                    cook_time_minutes, calories, protein, fat, carbs,
+                    fitness_tag, int(pregnancy_safe), pregnancy_stage, status,
+                    int(is_public), cover_image, now, now,
                 ),
             )
             recipe_id = cursor.lastrowid
@@ -271,6 +281,14 @@ class Recipe:
         category: str = None,
         difficulty: str = None,
         cook_time_minutes: int = None,
+        calories: float = None,
+        protein: float = None,
+        fat: float = None,
+        carbs: float = None,
+        fitness_tag: str = None,
+        pregnancy_safe: bool = None,
+        pregnancy_stage: str = None,
+        status: str = None,
         is_public: bool = None,
         cover_image: str = None,
         ingredients: list[dict] = None,
@@ -308,6 +326,30 @@ class Recipe:
         if cook_time_minutes is not None:
             fields.append("cook_time_minutes = ?")
             values.append(cook_time_minutes)
+        if calories is not None:
+            fields.append("calories = ?")
+            values.append(calories)
+        if protein is not None:
+            fields.append("protein = ?")
+            values.append(protein)
+        if fat is not None:
+            fields.append("fat = ?")
+            values.append(fat)
+        if carbs is not None:
+            fields.append("carbs = ?")
+            values.append(carbs)
+        if fitness_tag is not None:
+            fields.append("fitness_tag = ?")
+            values.append(fitness_tag)
+        if pregnancy_safe is not None:
+            fields.append("pregnancy_safe = ?")
+            values.append(int(pregnancy_safe))
+        if pregnancy_stage is not None:
+            fields.append("pregnancy_stage = ?")
+            values.append(pregnancy_stage)
+        if status is not None:
+            fields.append("status = ?")
+            values.append(status)
         if is_public is not None:
             fields.append("is_public = ?")
             values.append(int(is_public))
