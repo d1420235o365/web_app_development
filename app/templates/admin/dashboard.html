@@ -1,81 +1,99 @@
 {% extends "base.html" %}
 
+{% block title %}管理後台 - 食譜收藏夾{% endblock %}
+
 {% block content %}
 <div class="row mb-4">
-    <div class="col-12">
-        <h2 class="fw-bold text-danger">🛡️ 管理後台</h2>
+    <div class="col">
+        <h1 class="h2">🛡️ 管理控制台</h1>
+        <p class="text-muted">全站數據概覽與系統管理。</p>
     </div>
 </div>
 
 <div class="row g-4 mb-5">
-    <div class="col-md-6">
-        <div class="card border-0 shadow-sm rounded-4 bg-danger text-white h-100">
-            <div class="card-body p-4 d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 class="card-title fw-bold">總註冊人數</h5>
-                    <h2 class="display-4 fw-bold mb-0">{{ user_count }}</h2>
-                </div>
-                <div style="font-size: 4rem;">👥</div>
+    <div class="col-md-4">
+        <div class="card bg-primary text-white border-0 shadow-sm h-100">
+            <div class="card-body text-center py-4">
+                <h3 class="display-5 fw-bold">{{ user_count }}</h3>
+                <p class="mb-0">註冊使用者</p>
+                <a href="{{ url_for('admin.list_users') }}" class="btn btn-sm btn-light mt-3">管理使用者</a>
             </div>
-            <a href="{{ url_for('admin.list_users') }}" class="card-footer text-white text-decoration-none bg-danger bg-opacity-75 border-0 rounded-bottom-4 py-3 d-flex justify-content-between align-items-center">
-                <span>查看所有使用者</span>
-                <span>→</span>
-            </a>
         </div>
     </div>
-    
-    <div class="col-md-6">
-        <div class="card border-0 shadow-sm rounded-4 bg-primary text-white h-100">
-            <div class="card-body p-4 d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 class="card-title fw-bold">總食譜數量</h5>
-                    <h2 class="display-4 fw-bold mb-0">{{ recipe_count }}</h2>
-                </div>
-                <div style="font-size: 4rem;">🍳</div>
+    <div class="col-md-4">
+        <div class="card bg-success text-white border-0 shadow-sm h-100">
+            <div class="card-body text-center py-4">
+                <h3 class="display-5 fw-bold">{{ recipe_count }}</h3>
+                <p class="mb-0">總食譜數量</p>
+                <a href="{{ url_for('admin.list_recipes') }}" class="btn btn-sm btn-light mt-3">管理食譜</a>
             </div>
-            <a href="{{ url_for('admin.list_recipes') }}" class="card-footer text-white text-decoration-none bg-primary bg-opacity-75 border-0 rounded-bottom-4 py-3 d-flex justify-content-between align-items-center">
-                <span>管理所有食譜</span>
-                <span>→</span>
-            </a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-warning text-dark border-0 shadow-sm h-100">
+            <div class="card-body text-center py-4">
+                <h3 class="display-5 fw-bold">100%</h3>
+                <p class="mb-0">系統狀態</p>
+                <button class="btn btn-sm btn-dark mt-3" disabled>運行中</button>
+            </div>
         </div>
     </div>
 </div>
 
-<h4 class="fw-bold mb-3">最近新增的食譜</h4>
-<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-    <table class="table mb-0 table-hover">
-        <thead class="table-light">
-            <tr>
-                <th>ID</th>
-                <th>名稱</th>
-                <th>作者</th>
-                <th>公開狀態</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for recipe in recent_recipes %}
-            <tr>
-                <td>{{ recipe.id }}</td>
-                <td class="fw-bold">{{ recipe.title }}</td>
-                <td>{{ recipe.author }}</td>
-                <td>
-                    {% if recipe.is_public %}
-                        <span class="badge bg-success">公開</span>
-                    {% else %}
-                        <span class="badge bg-secondary">私人</span>
-                    {% endif %}
-                </td>
-                <td>
-                    <a href="{{ url_for('recipe.detail', id=recipe.id) }}" class="btn btn-sm btn-outline-primary">預覽</a>
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="5" class="text-center text-muted py-4">尚無食譜</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">最新食譜</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>名稱</th>
+                                <th>作者</th>
+                                <th>狀態</th>
+                                <th>日期</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in recent_recipes %}
+                            <tr>
+                                <td>{{ r.title }}</td>
+                                <td>{{ r.author }}</td>
+                                <td>
+                                    {% if r.status == 'approved' %}
+                                        <span class="badge bg-success">已核准</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark">待審核</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ r.created_at[:10] }}</td>
+                                <td>
+                                    <a href="{{ url_for('recipe.detail', id=r.id) }}" class="btn btn-sm btn-outline-primary">查看</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">快速連結</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                <a href="{{ url_for('recipe.index') }}" class="list-group-item list-group-item-action">🌐 前台首頁</a>
+                <a href="{{ url_for('admin.list_users') }}" class="list-group-item list-group-item-action">👥 使用者管理</a>
+                <a href="{{ url_for('admin.list_recipes') }}" class="list-group-item list-group-item-action">🍲 食譜管理</a>
+                <a href="#" class="list-group-item list-group-item-action">⚙️ 系統設定</a>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

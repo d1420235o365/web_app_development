@@ -1,150 +1,215 @@
 {% extends "base.html" %}
 
+{% block title %}{{ '編輯食譜' if is_edit else '分享新食譜' }} - 食譜收藏夾{% endblock %}
+
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="card glass-card border-0 shadow-sm rounded-4">
-            <div class="card-body p-4 p-md-5">
-                <h3 class="fw-bold mb-4">{% if is_edit %}編輯食譜{% else %}新增食譜 📝{% endif %}</h3>
-                
-                <form action="{{ url_for('recipe.edit_recipe', id=recipe.id) if is_edit else url_for('recipe.add_recipe') }}" method="POST">
-                    
-                    <h5 class="fw-bold border-bottom pb-2 mb-3">🔖 基本資訊</h5>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">食譜名稱 <span class="text-danger">*</span></label>
-                        <input type="text" name="title" class="form-control" value="{{ recipe.title | default('') }}" required placeholder="例如：番茄炒蛋">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">簡介說明</label>
-                        <textarea name="description" class="form-control" rows="2" placeholder="這道菜背後的故事或是特色...">{{ recipe.description | default('') }}</textarea>
-                    </div>
-                    
-                    <div class="row mb-4">
-                        <div class="col-md-4 mb-3 mb-md-0">
-                            <label class="form-label fw-bold">難易度</label>
-                            <select name="difficulty" class="form-select">
-                                <option value="">請選擇</option>
-                                <option value="easy" {% if recipe.difficulty == 'easy' %}selected{% endif %}>簡單</option>
-                                <option value="medium" {% if recipe.difficulty == 'medium' %}selected{% endif %}>中等</option>
-                                <option value="hard" {% if recipe.difficulty == 'hard' %}selected{% endif %}>困難</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3 mb-md-0">
-                            <label class="form-label fw-bold">分類標籤</label>
-                            <input type="text" name="category" class="form-control" value="{{ recipe.category | default('') }}" placeholder="如：家常、甜點">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold">預估時間 (分鐘)</label>
-                            <input type="number" name="cook_time_minutes" class="form-control" value="{{ recipe.cook_time_minutes | default('') }}" min="1">
+    <div class="col-lg-10">
+        <h1 class="h2 mb-4">{{ '✏️ 編輯食譜' if is_edit else '➕ 分享你的美味食譜' }}</h1>
+        
+        <form action="{{ url_for('recipe.edit_recipe', id=recipe.id) if is_edit else url_for('recipe.add_recipe') }}" method="POST">
+            <div class="row">
+                <!-- 左側：基本資訊 -->
+                <div class="col-md-7">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">基本資訊</h5>
+                            <div class="mb-3">
+                                <label for="title" class="form-label">食譜名稱 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="title" name="title" value="{{ recipe.title or '' }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="description" class="form-label">簡介</label>
+                                <textarea class="form-control" id="description" name="description" rows="3">{{ recipe.description or '' }}</textarea>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="category" class="form-label">分類</label>
+                                    <input type="text" class="form-control" id="category" name="category" placeholder="例如: 家常, 甜點" value="{{ recipe.category or '' }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="difficulty" class="form-label">難度</label>
+                                    <select class="form-select" id="difficulty" name="difficulty">
+                                        <option value="easy" {{ 'selected' if recipe.difficulty == 'easy' }}>Easy</option>
+                                        <option value="medium" {{ 'selected' if recipe.difficulty == 'medium' }}>Medium</option>
+                                        <option value="hard" {{ 'selected' if recipe.difficulty == 'hard' }}>Hard</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="cook_time_minutes" class="form-label">時間 (分鐘)</label>
+                                    <input type="number" class="form-control" id="cook_time_minutes" name="cook_time_minutes" value="{{ recipe.cook_time_minutes or '' }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="cover_image" class="form-label">封面圖片 URL</label>
+                                    <input type="text" class="form-control" id="cover_image" name="cover_image" placeholder="https://..." value="{{ recipe.cover_image or '' }}">
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <h5 class="fw-bold border-bottom pb-2 mb-3 mt-4">🥗 所需食材</h5>
-                    <div id="ingredients-container">
-                        {% if recipe.ingredients %}
-                            {% for ing in recipe.ingredients %}
-                            <div class="row g-2 mb-2 ingredient-row">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">料理步驟 <span class="text-danger">*</span></h5>
+                            <div id="steps-list">
+                                {% if recipe.steps %}
+                                    {% for step in recipe.steps %}
+                                    <div class="input-group mb-2 step-item">
+                                        <span class="input-group-text step-num">{{ loop.index }}</span>
+                                        <input type="text" name="steps[]" class="form-control" value="{{ step }}" required>
+                                        <button type="button" class="btn btn-outline-danger remove-step">✕</button>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="input-group mb-2 step-item">
+                                        <span class="input-group-text step-num">1</span>
+                                        <input type="text" name="steps[]" class="form-control" required>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <button type="button" id="add-step" class="btn btn-sm btn-outline-primary mt-2">+ 新增步驟</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右側：食材與營養 -->
+                <div class="col-md-5">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">食材清單</h5>
+                            <div id="ingredients-list">
+                                {% if recipe.ingredients %}
+                                    {% for ing in recipe.ingredients %}
+                                    <div class="row g-2 mb-2 ingredient-item">
+                                        <div class="col-7">
+                                            <input type="text" name="ingredient_name[]" class="form-control form-control-sm" placeholder="食材名稱" value="{{ ing.name }}">
+                                        </div>
+                                        <div class="col-4">
+                                            <input type="text" name="ingredient_quantity[]" class="form-control form-control-sm" placeholder="用量" value="{{ ing.quantity }}">
+                                        </div>
+                                        <div class="col-1">
+                                            <button type="button" class="btn btn-sm text-danger remove-ing p-0 mt-1">✕</button>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="row g-2 mb-2 ingredient-item">
+                                        <div class="col-7">
+                                            <input type="text" name="ingredient_name[]" class="form-control form-control-sm" placeholder="食材名稱">
+                                        </div>
+                                        <div class="col-5">
+                                            <input type="text" name="ingredient_quantity[]" class="form-control form-control-sm" placeholder="用量">
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <button type="button" id="add-ing" class="btn btn-sm btn-outline-primary mt-2">+ 新增食材</button>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">營養與健身/孕期標籤</h5>
+                            <div class="row g-2 mb-3">
                                 <div class="col-6">
-                                    <input type="text" name="ingredient_name[]" class="form-control" value="{{ ing.name }}" required placeholder="食材名稱 (必填)">
+                                    <label class="small text-muted">熱量 (kcal)</label>
+                                    <input type="number" step="0.1" name="calories" class="form-control form-control-sm" value="{{ recipe.calories or '' }}">
                                 </div>
-                                <div class="col-4">
-                                    <input type="text" name="ingredient_quantity[]" class="form-control" value="{{ ing.quantity }}" placeholder="份量 (如: 100g)">
-                                </div>
-                                <div class="col-2">
-                                    <button type="button" class="btn btn-outline-danger w-100" onclick="this.parentElement.parentElement.remove()">刪除</button>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="row g-2 mb-2 ingredient-row">
                                 <div class="col-6">
-                                    <input type="text" name="ingredient_name[]" class="form-control" placeholder="食材名稱 (如：雞蛋)">
+                                    <label class="small text-muted">蛋白質 (g)</label>
+                                    <input type="number" step="0.1" name="protein" class="form-control form-control-sm" value="{{ recipe.protein or '' }}">
                                 </div>
-                                <div class="col-4">
-                                    <input type="text" name="ingredient_quantity[]" class="form-control" placeholder="份量 (如: 2顆)">
+                                <div class="col-6">
+                                    <label class="small text-muted">脂肪 (g)</label>
+                                    <input type="number" step="0.1" name="fat" class="form-control form-control-sm" value="{{ recipe.fat or '' }}">
+                                </div>
+                                <div class="col-6">
+                                    <label class="small text-muted">碳水 (g)</label>
+                                    <input type="number" step="0.1" name="carbs" class="form-control form-control-sm" value="{{ recipe.carbs or '' }}">
                                 </div>
                             </div>
-                        {% endif %}
-                    </div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="addIngredientRow()">+ 新增食材欄位</button>
-
-                    <h5 class="fw-bold border-bottom pb-2 mb-3 mt-4">📋 料理步驟 <span class="text-danger">*</span></h5>
-                    <div id="steps-container">
-                        {% if recipe.steps %}
-                            {% for step in recipe.steps %}
-                            <div class="mb-2 d-flex step-row align-items-center">
-                                <span class="me-2 fw-bold text-muted step-num">{{ loop.index }}.</span>
-                                <input type="text" name="steps[]" class="form-control" value="{{ step }}" required>
-                                <button type="button" class="btn btn-outline-danger ms-2" onclick="removeStep(this)">✕</button>
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">健身目標</label>
+                                <select name="fitness_tag" class="form-select form-select-sm">
+                                    <option value="">無</option>
+                                    <option value="增肌" {{ 'selected' if recipe.fitness_tag == '增肌' }}>增肌</option>
+                                    <option value="減脂" {{ 'selected' if recipe.fitness_tag == '減脂' }}>減脂</option>
+                                    <option value="維持" {{ 'selected' if recipe.fitness_tag == '維持' }}>維持</option>
+                                </select>
                             </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="mb-2 d-flex step-row align-items-center">
-                                <span class="me-2 fw-bold text-muted step-num">1.</span>
-                                <input type="text" name="steps[]" class="form-control" required placeholder="步驟說明...">
-                                <button type="button" class="btn btn-link text-muted ms-2 disabled" style="opacity: 0;">✕</button>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="pregnancy_safe" name="pregnancy_safe" {{ 'checked' if recipe.pregnancy_safe }}>
+                                <label class="form-check-label" for="pregnancy_safe">孕婦安全安全食譜</label>
                             </div>
-                        {% endif %}
-                    </div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="addStepRow()">+ 新增步驟</button>
-
-                    <div class="form-check form-switch mt-5 mb-4">
-                        <input class="form-check-input" type="checkbox" role="switch" id="is_public" name="is_public" {% if recipe.get('is_public', 1) %}checked{% endif %}>
-                        <label class="form-check-label fw-bold" for="is_public">公開此食譜（讓所有人都能搜尋到）</label>
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">推薦孕期</label>
+                                <input type="text" name="pregnancy_stage" class="form-control form-control-sm" placeholder="初期, 中期, 晚期" value="{{ recipe.pregnancy_stage or '' }}">
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end border-top pt-4">
-                        <a href="{{ url_for('recipe.detail', id=recipe.id) if is_edit else url_for('recipe.index') }}" class="btn btn-light border px-4">取消</a>
-                        <button type="submit" class="btn btn-primary px-5 fw-bold shadow-sm">{% if is_edit %}儲存修改{% else %}發布食譜{% endif %}</button>
+                    <div class="card shadow-sm border-warning">
+                        <div class="card-body">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="is_public" name="is_public" {{ 'checked' if recipe.is_public != 0 }}>
+                                <label class="form-check-label" for="is_public">公開發布</label>
+                            </div>
+                            <button type="submit" class="btn btn-warning w-100 fw-bold">{{ '儲存變更' if is_edit else '立即發布' }}</button>
+                        </div>
                     </div>
-                </form>
+                </div>
             </div>
-        </div>
+        </form>
     </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
-function addIngredientRow() {
-    const container = document.getElementById('ingredients-container');
-    const html = `
-        <div class="row g-2 mb-2 ingredient-row">
-            <div class="col-6">
-                <input type="text" name="ingredient_name[]" class="form-control" placeholder="食材名稱">
+$(document).ready(function() {
+    // 新增步驟
+    $('#add-step').click(function() {
+        const count = $('.step-item').length + 1;
+        const html = `
+            <div class="input-group mb-2 step-item">
+                <span class="input-group-text step-num">${count}</span>
+                <input type="text" name="steps[]" class="form-control" required>
+                <button type="button" class="btn btn-outline-danger remove-step">✕</button>
             </div>
-            <div class="col-4">
-                <input type="text" name="ingredient_quantity[]" class="form-control" placeholder="份量">
-            </div>
-            <div class="col-2">
-                <button type="button" class="btn btn-outline-danger w-100" onclick="this.parentElement.parentElement.remove()">刪除</button>
-            </div>
-        </div>
-    `;
-    container.insertAdjacentHTML('beforeend', html);
-}
-
-function updateStepNumbers() {
-    const rows = document.querySelectorAll('.step-num');
-    rows.forEach((el, index) => {
-        el.innerText = `${index + 1}.`;
+        `;
+        $('#steps-list').append(html);
     });
-}
 
-function addStepRow() {
-    const container = document.getElementById('steps-container');
-    const index = container.children.length + 1;
-    const html = `
-        <div class="mb-2 d-flex step-row align-items-center">
-            <span class="me-2 fw-bold text-muted step-num">${index}.</span>
-            <input type="text" name="steps[]" class="form-control" required placeholder="步驟說明...">
-            <button type="button" class="btn btn-outline-danger ms-2" onclick="removeStep(this)">✕</button>
-        </div>
-    `;
-    container.insertAdjacentHTML('beforeend', html);
-}
+    // 移除步驟
+    $(document).on('click', '.remove-step', function() {
+        $(this).closest('.step-item').remove();
+        // 重排序號
+        $('.step-num').each(function(i) {
+            $(this).text(i + 1);
+        });
+    });
 
-function removeStep(btn) {
-    btn.closest('.step-row').remove();
-    updateStepNumbers();
-}
+    // 新增食材
+    $('#add-ing').click(function() {
+        const html = `
+            <div class="row g-2 mb-2 ingredient-item">
+                <div class="col-7">
+                    <input type="text" name="ingredient_name[]" class="form-control form-control-sm" placeholder="食材名稱">
+                </div>
+                <div class="col-4">
+                    <input type="text" name="ingredient_quantity[]" class="form-control form-control-sm" placeholder="用量">
+                </div>
+                <div class="col-1">
+                    <button type="button" class="btn btn-sm text-danger remove-ing p-0 mt-1">✕</button>
+                </div>
+            </div>
+        `;
+        $('#ingredients-list').append(html);
+    });
+
+    // 移除食材
+    $(document).on('click', '.remove-ing', function() {
+        $(this).closest('.ingredient-item').remove();
+    });
+});
 </script>
 {% endblock %}

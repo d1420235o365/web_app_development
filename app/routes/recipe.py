@@ -87,6 +87,20 @@ def add_recipe():
         if name.strip():
             ingredients.append({"name": name.strip(), "quantity": quantity.strip()})
 
+    # 營養與標籤欄位
+    calories = request.form.get("calories")
+    calories = float(calories) if calories else None
+    protein = request.form.get("protein")
+    protein = float(protein) if protein else None
+    fat = request.form.get("fat")
+    fat = float(fat) if fat else None
+    carbs = request.form.get("carbs")
+    carbs = float(carbs) if carbs else None
+    
+    fitness_tag = request.form.get("fitness_tag", "")
+    pregnancy_safe = request.form.get("pregnancy_safe") == "on"
+    pregnancy_stage = request.form.get("pregnancy_stage", "")
+
     if not title or not steps:
         flash("請填寫食譜名稱與至少一個步驟", "danger")
         return redirect(url_for('recipe.add_recipe_page'))
@@ -99,6 +113,13 @@ def add_recipe():
         category=category,
         difficulty=difficulty,
         cook_time_minutes=cook_time_minutes,
+        calories=calories,
+        protein=protein,
+        fat=fat,
+        carbs=carbs,
+        fitness_tag=fitness_tag,
+        pregnancy_safe=pregnancy_safe,
+        pregnancy_stage=pregnancy_stage,
         is_public=is_public,
         ingredients=ingredients
     )
@@ -176,6 +197,20 @@ def edit_recipe(id):
         if name.strip():
             ingredients.append({"name": name.strip(), "quantity": quantity.strip()})
 
+    # 營養與標籤欄位
+    calories = request.form.get("calories")
+    calories = float(calories) if calories else None
+    protein = request.form.get("protein")
+    protein = float(protein) if protein else None
+    fat = request.form.get("fat")
+    fat = float(fat) if fat else None
+    carbs = request.form.get("carbs")
+    carbs = float(carbs) if carbs else None
+    
+    fitness_tag = request.form.get("fitness_tag", "")
+    pregnancy_safe = request.form.get("pregnancy_safe") == "on"
+    pregnancy_stage = request.form.get("pregnancy_stage", "")
+
     if not title or not steps:
         flash("請填寫食譜名稱與至少一個步驟", "danger")
         return redirect(url_for('recipe.edit_recipe_page', id=id))
@@ -188,6 +223,13 @@ def edit_recipe(id):
         category=category,
         difficulty=difficulty,
         cook_time_minutes=cook_time_minutes,
+        calories=calories,
+        protein=protein,
+        fat=fat,
+        carbs=carbs,
+        fitness_tag=fitness_tag,
+        pregnancy_safe=pregnancy_safe,
+        pregnancy_stage=pregnancy_stage,
         is_public=is_public,
         ingredients=ingredients
     )
@@ -233,8 +275,10 @@ def toggle_favorite(id):
 def fitness_search():
     """健身食譜篩選：依增肌/減脂/維持目標顯示食譜。"""
     goal = request.args.get("goal", "").strip()
-    # 實作時呼叫 Recipe.search_by_fitness(goal)
-    recipes = [] 
+    if goal:
+        recipes = Recipe.search_by_fitness(goal)
+    else:
+        recipes = []
     return render_template("recipe/index.html", recipes=recipes, fitness_goal=goal)
 
 
@@ -242,6 +286,8 @@ def fitness_search():
 def pregnancy_search():
     """孕婦食譜篩選：依孕期階段顯示安全食譜。"""
     stage = request.args.get("stage", "").strip()
-    # 實作時呼叫 Recipe.search_by_pregnancy(stage)
-    recipes = []
+    if stage:
+        recipes = Recipe.search_by_pregnancy(stage)
+    else:
+        recipes = []
     return render_template("recipe/index.html", recipes=recipes, pregnancy_stage=stage)

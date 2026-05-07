@@ -69,6 +69,8 @@ class Recipe:
         steps_json = json.dumps(steps, ensure_ascii=False)
 
         try:
+            cursor = db.execute(
+                """
                 INSERT INTO recipes
                     (user_id, title, description, steps, category, difficulty,
                      cook_time_minutes, calories, protein, fat, carbs, 
@@ -233,13 +235,67 @@ class Recipe:
                 FROM recipe_ingredients ri
                 JOIN ingredients i ON ri.ingredient_id = i.id
                 WHERE i.name IN ({placeholders})
-                {where_public.replace("r.", "AND r.")}
                 GROUP BY ri.recipe_id
                 HAVING COUNT(DISTINCT i.id) = ?
             )
+            {where_public}
             ORDER BY r.created_at DESC
             """,
             (*ingredient_names, count),
+        ).fetchall()
+        return [cls._parse_row(row) for row in rows]
+
+    @classmethod
+    def search_by_fitness(cls, goal: str, public_only: bool = True) -> list[dict]:
+        """
+        依健身目標搜尋食譜。
+        
+        Args:
+            goal:        健身目標（增肌 / 減脂 / 維持）
+            public_only: 是否只搜尋公開食譜
+            
+        Returns:
+            符合標籤的食譜 dict list。
+        """
+        db = get_db()
+        where_public = "AND r.is_public = 1" if public_only else ""
+        rows = db.execute(
+            f"""
+            SELECT r.*, u.username AS author
+            FROM recipes r
+            JOIN users u ON r.user_id = u.id
+            WHERE r.fitness_tag = ?
+            {where_public}
+            ORDER BY r.created_at DESC
+            """,
+            (goal,),
+        ).fetchall()
+        return [cls._parse_row(row) for row in rows]
+
+    @classmethod
+    def search_by_pregnancy(cls, stage: str, public_only: bool = True) -> list[dict]:
+        """
+        依孕期階段搜尋安全食譜。
+        
+        Args:
+            stage:       孕期階段（初期 / 中期 / 晚期 / 產後）
+            public_only: 是否只搜尋公開食譜
+            
+        Returns:
+            安全且符合階段的食譜 dict list。
+        """
+        db = get_db()
+        where_public = "AND r.is_public = 1" if public_only else ""
+        rows = db.execute(
+            f"""
+            SELECT r.*, u.username AS author
+            FROM recipes r
+            JOIN users u ON r.user_id = u.id
+            WHERE r.pregnancy_safe = 1 AND r.pregnancy_stage LIKE ?
+            {where_public}
+            ORDER BY r.created_at DESC
+            """,
+            (f"%{stage}%",),
         ).fetchall()
         return [cls._parse_row(row) for row in rows]
 

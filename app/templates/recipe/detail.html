@@ -1,122 +1,163 @@
 {% extends "base.html" %}
 
+{% block title %}{{ recipe.title }} - 食譜收藏夾{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-lg-10">
-        
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <a href="{{ url_for('recipe.index') }}" class="btn btn-light border btn-sm">⬅️ 返回首頁</a>
-            
-            <div class="d-flex gap-2">
-                {% if session.get('user_id') == recipe.user_id or session.get('is_admin') %}
-                    <a href="{{ url_for('recipe.edit_recipe_page', id=recipe.id) }}" class="btn btn-outline-primary btn-sm">編輯</a>
-                    <form action="{{ url_for('recipe.delete_recipe', id=recipe.id) }}" method="POST" onsubmit="return confirm('確定要刪除這篇食譜嗎？');">
-                        <button type="submit" class="btn btn-outline-danger btn-sm">刪除</button>
-                    </form>
-                {% endif %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('recipe.index') }}">首頁</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ recipe.title }}</li>
+  </ol>
+</nav>
+
+<div class="row">
+    <!-- 左側：圖片與基本資訊 -->
+    <div class="col-lg-5 mb-4">
+        {% if recipe.cover_image %}
+            <img src="{{ recipe.cover_image }}" class="img-fluid rounded shadow-sm mb-3" alt="{{ recipe.title }}">
+        {% else %}
+            <div class="bg-light rounded d-flex align-items-center justify-content-center mb-3" style="aspect-ratio: 4/3;">
+                <span class="text-muted">暫無封面圖片</span>
             </div>
-        </div>
+        {% endif %}
 
-        <div class="card glass-card border-0 shadow-sm rounded-4 overflow-hidden mb-5">
-            {% if recipe.cover_image %}
-                <img src="{{ recipe.cover_image }}" class="w-100" style="height: 300px; object-fit: cover;">
-            {% else %}
-                <div class="bg-light d-flex align-items-center justify-content-center text-muted" style="height: 250px; font-size: 5rem;">🍳</div>
-            {% endif %}
-            
-            <div class="card-body p-4 p-md-5">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <h1 class="fw-bold m-0">{{ recipe.title }}</h1>
-                    
-                    {% if session.get('user_id') %}
-                        <!-- 收藏按鈕 -->
-                        <button id="favBtn" class="btn {{ 'btn-danger' if is_favorited else 'btn-outline-danger' }} rounded-circle shadow-sm" style="width: 50px; height: 50px;" onclick="toggleFav({{ recipe.id }})">
-                            <h4 class="m-0 pt-1" id="favIcon">{{ '❤️' if is_favorited else '🤍' }}</h4>
-                        </button>
-                    {% endif %}
-                </div>
-                
-                <div class="d-flex gap-3 mb-4 text-muted small">
-                    <span>👤 作者：<span class="fw-bold">{{ recipe.author }}</span></span>
-                    <span>⏱️ {{ recipe.cook_time_minutes ~ ' 分鐘' if recipe.cook_time_minutes else '未標示時間' }}</span>
-                    <span>🔥 難易度：{{ recipe.difficulty or '未標示' }}</span>
-                    <span>📑 分類：{{ recipe.category or '無分類' }}</span>
-                    <span id="favCountText">⭐ 收藏數：{{ fav_count }}</span>
-                </div>
-                
-                {% if recipe.description %}
-                    <p class="lead border-start border-4 border-primary ps-3 bg-light p-3 rounded-end-3">{{ recipe.description }}</p>
-                {% endif %}
-
-                <div class="row mt-5">
-                    <div class="col-md-5 col-lg-4 mb-4">
-                        <h4 class="fw-bold mb-3 border-bottom pb-2">🥗 食材清單</h4>
-                        <ul class="list-group list-group-flush">
-                            {% for ing in recipe.ingredients %}
-                            <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-0">
-                                <span class="fw-medium">{{ ing.name }}</span>
-                                <span class="text-muted">{{ ing.quantity or '適量' }}</span>
-                            </li>
-                            {% else %}
-                            <li class="list-group-item text-muted">無紀錄食材</li>
-                            {% endfor %}
-                        </ul>
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h4 class="card-title d-flex justify-content-between align-items-center">
+                    營養資訊
+                    <span class="badge bg-success small" style="font-size: 0.6em;">Per Serving</span>
+                </h4>
+                <div class="row text-center mt-3">
+                    <div class="col-6 mb-3">
+                        <div class="p-2 bg-light rounded">
+                            <div class="small text-muted">熱量</div>
+                            <div class="fw-bold">{{ recipe.calories or '-' }} kcal</div>
+                        </div>
                     </div>
-                    
-                    <div class="col-md-7 col-lg-8 pl-md-4">
-                        <h4 class="fw-bold mb-3 border-bottom pb-2">📋 料理步驟</h4>
-                        <ol class="list-group list-group-numbered list-group-flush">
-                            {% for step in recipe.steps %}
-                            <li class="list-group-item bg-transparent border-0 py-3 d-flex align-items-start">
-                                <div class="ms-2">
-                                    {{ step }}
-                                </div>
-                            </li>
-                            {% endfor %}
-                        </ol>
+                    <div class="col-6 mb-3">
+                        <div class="p-2 bg-light rounded">
+                            <div class="small text-muted">蛋白質</div>
+                            <div class="fw-bold">{{ recipe.protein or '-' }} g</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 bg-light rounded">
+                            <div class="small text-muted">脂肪</div>
+                            <div class="fw-bold">{{ recipe.fat or '-' }} g</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 bg-light rounded">
+                            <div class="small text-muted">碳水</div>
+                            <div class="fw-bold">{{ recipe.carbs or '-' }} g</div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <div class="card-footer bg-light border-0 px-4 py-3 text-muted small d-flex justify-content-between">
-                <span>建立時間：{{ recipe.created_at[:10] }}</span>
-                <span>最後更新：{{ recipe.updated_at[:10] }}</span>
             </div>
         </div>
     </div>
-</div>
 
-{% if session.get('user_id') %}
+    <!-- 右側：內容、食材與步驟 -->
+    <div class="col-lg-7">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <h1 class="display-6 fw-bold mb-0">{{ recipe.title }}</h1>
+            <button id="favBtn" class="btn btn-outline-danger" data-id="{{ recipe.id }}">
+                {{ '❤️ 已收藏' if is_favorited else '🤍 收藏' }}
+                <span class="badge rounded-pill bg-danger" id="favCount">{{ fav_count }}</span>
+            </button>
+        </div>
+        
+        <p class="text-muted mb-4">{{ recipe.description or '這位作者很懶，什麼都沒寫...' }}</p>
+
+        <div class="d-flex gap-3 mb-4">
+            <div class="text-center">
+                <div class="small text-muted">難度</div>
+                <span class="badge bg-warning text-dark">{{ recipe.difficulty }}</span>
+            </div>
+            <div class="text-center border-start ps-3">
+                <div class="small text-muted">時間</div>
+                <div class="fw-bold">{{ recipe.cook_time_minutes or '?' }} min</div>
+            </div>
+            <div class="text-center border-start ps-3">
+                <div class="small text-muted">分類</div>
+                <div class="fw-bold">{{ recipe.category or '未分類' }}</div>
+            </div>
+            {% if recipe.fitness_tag %}
+            <div class="text-center border-start ps-3">
+                <div class="small text-muted">健身</div>
+                <span class="badge bg-success">{{ recipe.fitness_tag }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if recipe.pregnancy_safe %}
+        <div class="alert alert-primary d-flex align-items-center" role="alert">
+            <div>
+                ✨ <strong>孕婦友善：</strong>此食譜被標記為孕期安全。
+                {% if recipe.pregnancy_stage %}<br><small>推薦階段：{{ recipe.pregnancy_stage }}</small>{% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <hr>
+
+        <h3 class="h4 mb-3">🛒 需要食材</h3>
+        <ul class="list-group list-group-flush mb-4">
+            {% for ing in recipe.ingredients %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>{{ ing.name }}</span>
+                <span class="text-muted">{{ ing.quantity }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+
+        <h3 class="h4 mb-3">👨‍🍳 料理步驟</h3>
+        <div class="steps-container">
+            {% for step in recipe.steps %}
+            <div class="d-flex mb-3">
+                <div class="me-3">
+                    <span class="badge bg-dark rounded-circle d-flex align-items-center justify-content-center" style="width: 25px; height: 25px;">{{ loop.index }}</span>
+                </div>
+                <div class="border-bottom pb-2 w-100">{{ step }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if session.get('user_id') == recipe.user_id or session.get('is_admin') %}
+        <div class="mt-5 pt-3 border-top d-flex gap-2">
+            <a href="{{ url_for('recipe.edit_recipe_page', id=recipe.id) }}" class="btn btn-primary">編輯食譜</a>
+            <form action="{{ url_for('recipe.delete_recipe', id=recipe.id) }}" method="POST" onsubmit="return confirm('確定要刪除這份食譜嗎？')">
+                <button type="submit" class="btn btn-outline-danger">刪除食譜</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
 <script>
-function toggleFav(recipeId) {
-    fetch(`/recipe/${recipeId}/favorite`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'}
-    })
-    .then(r => r.json())
-    .then(data => {
-        if(data.error) {
-            window.location.href = data.redirect;
-            return;
-        }
+$(document).ready(function() {
+    $('#favBtn').click(function() {
+        const btn = $(this);
+        const recipeId = btn.data('id');
         
-        const btn = document.getElementById('favBtn');
-        const icon = document.getElementById('favIcon');
-        const countText = document.getElementById('favCountText');
-        
-        if(data.status === 'added') {
-            btn.classList.remove('btn-outline-danger');
-            btn.classList.add('btn-danger');
-            icon.innerText = '❤️';
-        } else {
-            btn.classList.remove('btn-danger');
-            btn.classList.add('btn-outline-danger');
-            icon.innerText = '🤍';
-        }
-        
-        countText.innerText = `⭐ 收藏數：${data.fav_count}`;
+        $.post(`/recipe/${recipeId}/favorite`, function(data) {
+            if (data.error) {
+                alert(data.error);
+                if (data.redirect) window.location.href = data.redirect;
+                return;
+            }
+            
+            if (data.status === 'added') {
+                btn.html('❤️ 已收藏 <span class="badge rounded-pill bg-danger" id="favCount">' + data.fav_count + '</span>');
+                btn.removeClass('btn-outline-danger').addClass('btn-danger');
+            } else {
+                btn.html('🤍 收藏 <span class="badge rounded-pill bg-danger" id="favCount">' + data.fav_count + '</span>');
+                btn.removeClass('btn-danger').addClass('btn-outline-danger');
+            }
+        });
     });
-}
+});
 </script>
-{% endif %}
 {% endblock %}

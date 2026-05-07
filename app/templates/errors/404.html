@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}頁面不存在 - 404{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+    <h1 class="display-1 fw-bold text-muted">404</h1>
+    <h2 class="mb-4">哎呀！找不到這個頁面 🔍</h2>
+    <p class="text-muted mb-5">您所訪問的路徑可能已經移除，或是輸入錯誤。</p>
+    <a href="{{ url_for('recipe.index') }}" class="btn btn-warning btn-lg px-4 fw-bold">返回首頁</a>
+</div>
+{% endblock %}

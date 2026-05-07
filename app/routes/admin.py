@@ -104,6 +104,6 @@ def approve_recipe(id):
     if not recipe:
         abort(404)
         
-    # 實作時呼叫 Recipe.update(id, status='approved')
+    Recipe.update(id, status='approved')
     flash("食譜已核准公開", "success")
     return redirect(url_for("admin.list_recipes"))

@@ -1,58 +1,78 @@
 {% extends "base.html" %}
 
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4 mt-2">
-    <h2 class="fw-bold m-0">探索食譜 🌟</h2>
-    {% if session.get('user_id') %}
-        <a href="{{ url_for('recipe.add_recipe_page') }}" class="btn btn-primary shadow-sm fw-bold">📝 新增食譜</a>
-    {% endif %}
-</div>
+{% block title %}
+    {% if query %}搜尋: {{ query }}{% elif fitness_goal %}健身: {{ fitness_goal }}{% elif pregnancy_stage %}孕期: {{ pregnancy_stage }}{% else %}所有食譜{% endif %} - 食譜收藏夾
+{% endblock %}
 
-<!-- 搜尋列 -->
-<div class="card glass-card border-0 mb-5 shadow-sm rounded-4">
-    <div class="card-body p-4">
-        <form action="{{ url_for('recipe.index') }}" method="GET" class="d-flex w-100">
-            <input type="text" name="q" class="form-control form-control-lg me-2" placeholder="輸入食譜關鍵字..." value="{{ query }}">
-            <button type="submit" class="btn btn-dark btn-lg px-4 fw-bold">搜尋</button>
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-6">
+        <h1 class="h2">
+            {% if query %}
+                🔍 搜尋結果: "{{ query }}"
+            {% elif fitness_goal %}
+                💪 健身目標: {{ fitness_goal }}
+            {% elif pregnancy_stage %}
+                🤰 孕期階段: {{ pregnancy_stage }}
+            {% else %}
+                🥗 探索美味食譜
+            {% endif %}
+        </h1>
+    </div>
+    <div class="col-md-6">
+        <form action="{{ url_for('recipe.index') }}" method="GET" class="d-flex">
+            <input type="text" name="q" class="form-control me-2" placeholder="搜尋食譜名稱..." value="{{ query or '' }}">
+            <button type="submit" class="btn btn-warning">搜尋</button>
         </form>
     </div>
 </div>
 
-{% if query %}
-    <h4 class="mb-4">「{{ query }}」的搜尋結果 ({{ recipes|length }} 筆)</h4>
+<hr>
+
+{% if not recipes %}
+    <div class="text-center py-5">
+        <h3 class="text-muted">找不到相關食譜 😅</h3>
+        <p>換個關鍵字搜尋，或是<a href="{{ url_for('recipe.index') }}">返回瀏覽所有食譜</a>。</p>
+    </div>
+{% else %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for recipe in recipes %}
+            <div class="col">
+                <div class="card h-100 recipe-card" onclick="location.href='{{ url_for('recipe.detail', id=recipe.id) }}'">
+                    {% if recipe.cover_image %}
+                        <img src="{{ recipe.cover_image }}" class="card-img-top" alt="{{ recipe.title }}" style="height: 200px; object-fit: cover;">
+                    {% else %}
+                        <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <span class="text-muted">暫無圖片</span>
+                        </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">{{ recipe.title }}</h5>
+                            <span class="badge bg-warning text-dark">{{ recipe.difficulty }}</span>
+                        </div>
+                        <p class="card-text text-truncate small text-muted">{{ recipe.description or '暫無簡介' }}</p>
+                        
+                        <div class="d-flex flex-wrap gap-1 mb-3">
+                            {% if recipe.category %}
+                                <span class="badge bg-info text-dark">{{ recipe.category }}</span>
+                            {% endif %}
+                            {% if recipe.fitness_tag %}
+                                <span class="badge bg-success">{{ recipe.fitness_tag }}</span>
+                            {% endif %}
+                            {% if recipe.pregnancy_safe %}
+                                <span class="badge bg-primary">孕婦安全</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent border-top-0 d-flex justify-content-between align-items-center">
+                        <small class="text-muted">👤 {{ recipe.author }}</small>
+                        <small class="text-muted">⏱️ {{ recipe.cook_time_minutes or '?' }} min</small>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
 {% endif %}
 
-<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-    {% for recipe in recipes %}
-    <div class="col">
-        <div class="card h-100 border-0 shadow-sm rounded-4 text-decoration-none text-dark transition-hover" onclick="location.href='{{ url_for('recipe.detail', id=recipe.id) }}'" style="cursor:pointer;">
-            {% if recipe.cover_image %}
-                <img src="{{ recipe.cover_image }}" class="card-img-top rounded-top-4" alt="{{ recipe.title }}" style="height: 200px; object-fit: cover;">
-            {% else %}
-                <div class="bg-light rounded-top-4 d-flex align-items-center justify-content-center text-muted" style="height: 200px; font-size: 3rem;">
-                    🍳
-                </div>
-            {% endif %}
-            <div class="card-body">
-                <h5 class="card-title fw-bold text-truncate">{{ recipe.title }}</h5>
-                <p class="card-text text-muted small text-truncate">{{ recipe.description or '無詳細說明' }}</p>
-                <div class="d-flex justify-content-between align-items-center mt-3">
-                    <span class="badge bg-{{ 'success' if recipe.difficulty == 'easy' else 'warning' if recipe.difficulty == 'medium' else 'danger' if recipe.difficulty == 'hard' else 'secondary' }}">
-                        {{ recipe.difficulty or '未標示難度' }}
-                    </span>
-                    <small class="text-muted">⏱️ {{ recipe.cook_time_minutes ~ ' 分鐘' if recipe.cook_time_minutes else '未標示時間' }}</small>
-                </div>
-            </div>
-            <div class="card-footer bg-white border-0 rounded-bottom-4 text-muted small">
-                ✍️ 由 <span class="fw-bold">{{ recipe.author }}</span> 分享
-            </div>
-        </div>
-    </div>
-    {% else %}
-    <div class="col-12 text-center py-5">
-        <h3 class="text-muted">找不到相符的食譜 🥲</h3>
-        <p class="text-muted">試試看其他關鍵字，或是自己來新增一篇吧！</p>
-    </div>
-    {% endfor %}
-</div>
 {% endblock %}

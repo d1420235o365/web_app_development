@@ -1,71 +1,114 @@
 {% extends "base.html" %}
 
+{% block title %}食材組合搜尋 - 食譜收藏夾{% endblock %}
+
 {% block content %}
+<h1 class="h2 mb-4">🔍 食材組合搜尋</h1>
+<p class="text-muted">勾選你冰箱裡有的食材，我們將為你找出「同時包含」這些食材的美味食譜！</p>
+
 <div class="row">
+    <!-- 左側：食材勾選區 -->
     <div class="col-lg-4 mb-4">
-        <div class="card glass-card border-0 shadow-sm rounded-4 sticky-top" style="top: 80px; z-index: 1;">
-            <div class="card-body p-4">
-                <h4 class="fw-bold mb-3">🔍 食材組合篩選</h4>
-                <p class="text-muted small">勾選您手邊擁有的食材，我們會找出同時包含這些食材的食譜。</p>
-                
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning text-dark fw-bold">
+                我的冰箱清單
+            </div>
+            <div class="card-body">
                 <form action="{{ url_for('recipe.ingredient_search') }}" method="GET">
-                    <div class="row g-2 mb-4" style="max-height: 400px; overflow-y: auto;">
+                    <div class="input-group mb-3">
+                        <input type="text" id="ingFilter" class="form-control form-control-sm" placeholder="快速過濾食材...">
+                    </div>
+                    
+                    <div class="ingredient-selector overflow-auto" style="max-height: 400px;">
                         {% for ing in all_ingredients %}
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="ingredients" value="{{ ing.name }}" id="ing_{{ ing.id }}" {% if ing.name in selected %}checked{% endif %}>
-                                <label class="form-check-label user-select-none w-100 cursor-pointer" for="ing_{{ ing.id }}">
-                                    {{ ing.name }}
-                                </label>
-                            </div>
+                        <div class="form-check ing-check-item">
+                            <input class="form-check-input" type="checkbox" name="ingredients" value="{{ ing.name }}" id="ing_{{ ing.id }}" {{ 'checked' if ing.name in selected }}>
+                            <label class="form-check-label d-flex justify-content-between" for="ing_{{ ing.id }}">
+                                {{ ing.name }}
+                                {% if ing.is_pregnancy_warning %}
+                                    <span class="badge rounded-pill bg-danger" title="孕期注意" style="font-size: 0.6em;">!</span>
+                                {% endif %}
+                            </label>
                         </div>
                         {% endfor %}
                     </div>
-                    <button type="submit" class="btn btn-primary w-100 fw-bold rounded-3">搜尋食譜</button>
+                    
+                    <hr>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-warning fw-bold">開始搜尋</button>
+                        <a href="{{ url_for('recipe.ingredient_search') }}" class="btn btn-outline-secondary btn-sm">清除選擇</a>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
 
+    <!-- 右側：搜尋結果 -->
     <div class="col-lg-8">
         {% if selected %}
-            <h4 class="fw-bold mb-4">符合您食材的食譜 ({{ results|length }} 筆)</h4>
-            <div class="d-flex flex-wrap gap-2 mb-4">
-                <span class="text-muted mt-1">您選了：</span>
-                {% for s in selected %}
-                    <span class="badge bg-secondary">{{ s }}</span>
+            <div class="mb-3">
+                <span class="text-muted">已選食材：</span>
+                {% for name in selected %}
+                    <span class="badge bg-dark me-1">{{ name }}</span>
                 {% endfor %}
             </div>
             
-            <div class="row row-cols-1 row-cols-md-2 g-4">
-                {% for recipe in results %}
-                <div class="col">
-                    <div class="card h-100 border-0 shadow-sm rounded-4 text-decoration-none text-dark transition-hover" onclick="location.href='{{ url_for('recipe.detail', id=recipe.id) }}'" style="cursor:pointer;">
-                        {% if recipe.cover_image %}
-                            <img src="{{ recipe.cover_image }}" class="card-img-top rounded-top-4" style="height: 180px; object-fit: cover;">
-                        {% else %}
-                            <div class="bg-light rounded-top-4 d-flex align-items-center justify-content-center text-muted" style="height: 180px; font-size: 2.5rem;">🍳</div>
-                        {% endif %}
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold text-truncate">{{ recipe.title }}</h5>
-                            <small class="text-muted">⏱️ {{ recipe.cook_time_minutes ~ ' 分鐘' if recipe.cook_time_minutes else '未標示時間' }}</small>
+            {% if not results %}
+                <div class="alert alert-light border text-center py-5">
+                    <h4 class="text-muted">目前沒有食譜同時包含這些食材 😢</h4>
+                    <p>試試減少勾選一些食材，或換個組合看看！</p>
+                </div>
+            {% else %}
+                <div class="row row-cols-1 row-cols-md-2 g-3">
+                    {% for recipe in results %}
+                    <div class="col">
+                        <div class="card h-100 recipe-card shadow-sm" onclick="location.href='{{ url_for('recipe.detail', id=recipe.id) }}'">
+                            <div class="row g-0">
+                                <div class="col-4">
+                                    {% if recipe.cover_image %}
+                                        <img src="{{ recipe.cover_image }}" class="img-fluid rounded-start h-100" style="object-fit: cover;" alt="{{ recipe.title }}">
+                                    {% else %}
+                                        <div class="bg-light h-100 d-flex align-items-center justify-content-center">
+                                            <small class="text-muted">No Image</small>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-8">
+                                    <div class="card-body p-2">
+                                        <h6 class="card-title text-truncate mb-1">{{ recipe.title }}</h6>
+                                        <div class="mb-1">
+                                            <span class="badge bg-warning text-dark p-1" style="font-size: 0.7em;">{{ recipe.difficulty }}</span>
+                                            <span class="badge bg-info text-dark p-1" style="font-size: 0.7em;">{{ recipe.category }}</span>
+                                        </div>
+                                        <small class="text-muted d-block">⏱️ {{ recipe.cook_time_minutes }} min</small>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
+                    {% endfor %}
                 </div>
-                {% empty %}
-                <div class="col-12 text-center py-5">
-                    <h5 class="text-muted">找不到同時包含這些食材的食譜 🥲</h5>
-                    <p class="text-muted">嘗試減少勾選的食材項目，可以找到更多配方。</p>
-                </div>
-                {% endfor %}
-            </div>
+            {% endif %}
         {% else %}
-            <div class="text-center py-5 mt-5">
-                <div style="font-size: 4rem;">🥗</div>
-                <h3 class="fw-bold mt-3">請在左側勾選您的食材</h3>
-                <p class="text-muted">系統將推薦適合您的料理配方</p>
+            <div class="alert alert-light border text-center py-5">
+                <h4 class="text-muted">請在左側勾選食材以開始搜尋</h4>
+                <p>我們將為你展示符合所有勾選條件的食譜。</p>
             </div>
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // 食材過濾功能
+    $('#ingFilter').on('keyup', function() {
+        const value = $(this).val().toLowerCase();
+        $('.ing-check-item').filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+        });
+    });
+});
+</script>
 {% endblock %}
