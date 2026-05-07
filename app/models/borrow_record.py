@@ -16,33 +16,75 @@ class BorrowRecord(db.Model):
 
     @classmethod
     def create(cls, user_id, book_id):
-        record = cls(user_id=user_id, book_id=book_id)
-        db.session.add(record)
-        db.session.commit()
-        return record
+        """建立借閱紀錄"""
+        try:
+            record = cls(user_id=user_id, book_id=book_id)
+            db.session.add(record)
+            db.session.commit()
+            return record
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error creating borrow record: {e}")
+            return None
 
     @classmethod
     def get_all(cls):
-        return cls.query.all()
+        """取得所有借閱紀錄列表"""
+        try:
+            return cls.query.all()
+        except Exception as e:
+            print(f"Error getting all borrow records: {e}")
+            return []
 
     @classmethod
     def get_by_id(cls, record_id):
-        return cls.query.get(record_id)
+        """依據 ID 取得借閱紀錄"""
+        try:
+            return cls.query.get(record_id)
+        except Exception as e:
+            print(f"Error getting borrow record by id: {e}")
+            return None
 
     @classmethod
     def get_active_by_user(cls, user_id):
-        return cls.query.filter_by(user_id=user_id, status='Active').all()
+        """取得特定使用者的當前借閱中紀錄"""
+        try:
+            return cls.query.filter_by(user_id=user_id, status='Active').all()
+        except Exception as e:
+            print(f"Error getting active records for user: {e}")
+            return []
 
     def mark_as_returned(self):
-        self.return_date = datetime.utcnow()
-        self.status = 'Returned'
-        db.session.commit()
+        """標記書籍為已歸還"""
+        try:
+            self.return_date = datetime.utcnow()
+            self.status = 'Returned'
+            db.session.commit()
+            return True
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error marking record as returned: {e}")
+            return False
 
     def update(self, **kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        db.session.commit()
+        """更新紀錄資訊"""
+        try:
+            for key, value in kwargs.items():
+                setattr(self, key, value)
+            db.session.commit()
+            return True
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error updating borrow record: {e}")
+            return False
 
     def delete(self):
-        db.session.delete(self)
-        db.session.commit()
+        """刪除借閱紀錄"""
+        try:
+            db.session.delete(self)
+            db.session.commit()
+            return True
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error deleting borrow record: {e}")
+            return False

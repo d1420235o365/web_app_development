@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}我的借閱紀錄 - 微型圖書館{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h1 class="fw-bold">個人中心</h1>
+        <p class="text-muted">管理您的借閱歷史與歸還書籍</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- 當前借閱中 -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0 fw-bold">📖 當前借閱中</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">書名</th>
+                                <th>借閱日期</th>
+                                <th>歸還期限</th>
+                                <th class="text-end pe-4">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if records %}
+                                {% for record in records %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="fw-bold">{{ record.book.title }}</div>
+                                        <div class="small text-muted">{{ record.book.author }}</div>
+                                    </td>
+                                    <td>{{ record.borrow_date.strftime('%Y-%m-%d') }}</td>
+                                    <td><span class="text-danger small">14 天內</span></td>
+                                    <td class="text-end pe-4">
+                                        <form action="{{ url_for('borrow.return_book', record_id=record.id) }}" method="POST">
+                                            <button type="submit" class="btn btn-sm btn-outline-success">執行歸還</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-5 text-muted">
+                                        您目前沒有借閱中的書籍
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 個人資訊卡 -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm bg-primary text-white p-4 h-100">
+            <div class="card-body">
+                <div class="mb-4">
+                    <div class="display-4 mb-2">👤</div>
+                    <h3 class="fw-bold mb-0">{{ session.username }}</h3>
+                    <span class="badge bg-white text-primary">借閱者</span>
+                </div>
+                <hr class="border-white opacity-25">
+                <div class="mb-3">
+                    <label class="small d-block opacity-75">累計借閱次數</label>
+                    <span class="h4">{{ records|length }}</span>
+                </div>
+                <div class="small opacity-75">
+                    感謝您對微型圖書館的支持！閱讀能讓生活更精彩。
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -18,28 +18,63 @@ class User(db.Model):
 
     @classmethod
     def create(cls, username, password_hash, role='borrower'):
-        user = cls(username=username, password_hash=password_hash, role=role)
-        db.session.add(user)
-        db.session.commit()
-        return user
+        """建立新使用者並存入資料庫"""
+        try:
+            user = cls(username=username, password_hash=password_hash, role=role)
+            db.session.add(user)
+            db.session.commit()
+            return user
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error creating user: {e}")
+            return None
 
     @classmethod
     def get_all(cls):
-        return cls.query.all()
+        """取得所有使用者列表"""
+        try:
+            return cls.query.all()
+        except Exception as e:
+            print(f"Error getting all users: {e}")
+            return []
 
     @classmethod
     def get_by_id(cls, user_id):
-        return cls.query.get(user_id)
+        """依據 ID 取得單一使用者"""
+        try:
+            return cls.query.get(user_id)
+        except Exception as e:
+            print(f"Error getting user by id: {e}")
+            return None
 
     @classmethod
     def get_by_username(cls, username):
-        return cls.query.filter_by(username=username).first()
+        """依據使用者名稱取得單一使用者"""
+        try:
+            return cls.query.filter_by(username=username).first()
+        except Exception as e:
+            print(f"Error getting user by username: {e}")
+            return None
 
     def update(self, **kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        db.session.commit()
+        """更新使用者資料"""
+        try:
+            for key, value in kwargs.items():
+                setattr(self, key, value)
+            db.session.commit()
+            return True
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error updating user: {e}")
+            return False
 
     def delete(self):
-        db.session.delete(self)
-        db.session.commit()
+        """從資料庫刪除該使用者"""
+        try:
+            db.session.delete(self)
+            db.session.commit()
+            return True
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error deleting user: {e}")
+            return False

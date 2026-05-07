@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}圖書瀏覽 - 微型圖書館{% endblock %}
+
+{% block content %}
+<div class="row mb-5 justify-content-center">
+    <div class="col-md-8 text-center">
+        <h1 class="display-5 fw-bold mb-3">找一本好書，開始閱讀</h1>
+        <form action="{{ url_for('main.index') }}" method="GET" class="d-flex shadow-sm rounded">
+            <input type="text" name="q" class="form-control form-control-lg border-0" placeholder="輸入書名、作者或關鍵字..." value="{{ query }}">
+            <button type="submit" class="btn btn-primary px-4">搜尋</button>
+        </form>
+    </div>
+</div>
+
+<div class="row g-4">
+    {% if books %}
+        {% for book in books %}
+        <div class="col-md-4 col-lg-3">
+            <div class="card h-100 border-0 shadow-sm hover-up">
+                <div class="card-body">
+                    <span class="badge {% if book.status == 'Available' %}bg-success{% else %}bg-secondary{% endif %} mb-2">
+                        {{ '在庫' if book.status == 'Available' else '已借出' }}
+                    </span>
+                    <h5 class="card-title text-truncate">{{ book.title }}</h5>
+                    <p class="card-text text-muted small">作者: {{ book.author or '未知' }}</p>
+                    <p class="card-text small"><span class="text-secondary">分類:</span> {{ book.category or '未分類' }}</p>
+                </div>
+                <div class="card-footer bg-transparent border-0 pb-3">
+                    <a href="{{ url_for('main.book_detail', book_id=book.id) }}" class="btn btn-outline-primary w-100">查看詳情</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12 text-center py-5">
+            <p class="text-muted fs-4">目前沒有符合條件的書籍 📚</p>
+            <a href="{{ url_for('main.index') }}" class="btn btn-link">顯示所有圖書</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

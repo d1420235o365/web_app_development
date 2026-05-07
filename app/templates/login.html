@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}登入 - 微型圖書館{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card shadow-sm border-0 mt-5">
+            <div class="card-body p-5">
+                <h2 class="text-center mb-4 fw-bold">歡迎回來</h2>
+                <form action="{{ url_for('auth.login') }}" method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">帳號</label>
+                        <input type="text" name="username" id="username" class="form-control" required autofocus>
+                    </div>
+                    <div class="mb-4">
+                        <label for="password" class="form-label">密碼</label>
+                        <input type="password" name="password" id="password" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-2">登入系統</button>
+                </form>
+                <div class="text-center mt-4">
+                    <span class="text-muted">還沒有帳號？</span>
+                    <a href="{{ url_for('auth.register') }}" class="text-decoration-none">立即註冊</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

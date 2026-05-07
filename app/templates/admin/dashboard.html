@@ -1,98 +1,48 @@
 {% extends "base.html" %}
 
-{% block title %}管理後台 - 食譜收藏夾{% endblock %}
+{% block title %}管理後台 - 微型圖書館{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col">
-        <h1 class="h2">🛡️ 管理控制台</h1>
-        <p class="text-muted">全站數據概覽與系統管理。</p>
+<div class="row mb-4 align-items-center">
+    <div class="col-md-6">
+        <h1 class="fw-bold">管理員後台</h1>
+    </div>
+    <div class="col-md-6 text-md-end">
+        <a href="{{ url_for('admin.add_book') }}" class="btn btn-primary">➕ 新增圖書</a>
+        <a href="{{ url_for('admin.overdue_list') }}" class="btn btn-warning">⏳ 逾期追蹤</a>
     </div>
 </div>
 
 <div class="row g-4 mb-5">
     <div class="col-md-4">
-        <div class="card bg-primary text-white border-0 shadow-sm h-100">
-            <div class="card-body text-center py-4">
-                <h3 class="display-5 fw-bold">{{ user_count }}</h3>
-                <p class="mb-0">註冊使用者</p>
-                <a href="{{ url_for('admin.list_users') }}" class="btn btn-sm btn-light mt-3">管理使用者</a>
-            </div>
+        <div class="card border-0 shadow-sm text-center p-4">
+            <h3 class="text-muted small text-uppercase">館藏總數</h3>
+            <div class="display-4 fw-bold">{{ total_books }}</div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card bg-success text-white border-0 shadow-sm h-100">
-            <div class="card-body text-center py-4">
-                <h3 class="display-5 fw-bold">{{ recipe_count }}</h3>
-                <p class="mb-0">總食譜數量</p>
-                <a href="{{ url_for('admin.list_recipes') }}" class="btn btn-sm btn-light mt-3">管理食譜</a>
-            </div>
+        <div class="card border-0 shadow-sm text-center p-4">
+            <h3 class="text-muted small text-uppercase">借閱中書籍</h3>
+            <div class="display-4 fw-bold text-primary">{{ active_borrows }}</div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card bg-warning text-dark border-0 shadow-sm h-100">
-            <div class="card-body text-center py-4">
-                <h3 class="display-5 fw-bold">100%</h3>
-                <p class="mb-0">系統狀態</p>
-                <button class="btn btn-sm btn-dark mt-3" disabled>運行中</button>
-            </div>
+        <div class="card border-0 shadow-sm text-center p-4">
+            <h3 class="text-muted small text-uppercase">系統健康度</h3>
+            <div class="display-4 fw-bold text-success">100%</div>
         </div>
     </div>
 </div>
 
-<div class="row">
-    <div class="col-lg-8">
-        <div class="card shadow-sm">
-            <div class="card-header bg-white">
-                <h5 class="mb-0">最新食譜</h5>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0 align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>名稱</th>
-                                <th>作者</th>
-                                <th>狀態</th>
-                                <th>日期</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for r in recent_recipes %}
-                            <tr>
-                                <td>{{ r.title }}</td>
-                                <td>{{ r.author }}</td>
-                                <td>
-                                    {% if r.status == 'approved' %}
-                                        <span class="badge bg-success">已核准</span>
-                                    {% else %}
-                                        <span class="badge bg-warning text-dark">待審核</span>
-                                    {% endif %}
-                                </td>
-                                <td>{{ r.created_at[:10] }}</td>
-                                <td>
-                                    <a href="{{ url_for('recipe.detail', id=r.id) }}" class="btn btn-sm btn-outline-primary">查看</a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h5 class="card-title mb-0 fw-bold">全部圖書管理</h5>
     </div>
-    <div class="col-lg-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-white">
-                <h5 class="mb-0">快速連結</h5>
-            </div>
-            <div class="list-group list-group-flush">
-                <a href="{{ url_for('recipe.index') }}" class="list-group-item list-group-item-action">🌐 前台首頁</a>
-                <a href="{{ url_for('admin.list_users') }}" class="list-group-item list-group-item-action">👥 使用者管理</a>
-                <a href="{{ url_for('admin.list_recipes') }}" class="list-group-item list-group-item-action">🍲 食譜管理</a>
-                <a href="#" class="list-group-item list-group-item-action">⚙️ 系統設定</a>
-            </div>
+    <div class="card-body p-0">
+        <!-- 這裡可以實作表格列出所有書籍並提供 編輯/刪除 按鈕 -->
+        <div class="p-4 text-center text-muted">
+            <p>管理介面已就緒，可從上方按鈕新增書籍。</p>
+            <p class="small">（後續可在此擴充完整的資料表格）</p>
         </div>
     </div>
 </div>

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }}書籍 - 微型圖書館{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4 p-lg-5">
+                <h2 class="fw-bold mb-4">{{ action }}書籍資訊</h2>
+                
+                <form action="{% if action == 'Add' %}{{ url_for('admin.add_book') }}{% else %}{{ url_for('admin.edit_book', book_id=book.id) }}{% endif %}" method="POST">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="title" class="form-label">書名 <span class="text-danger">*</span></label>
+                            <input type="text" name="title" id="title" class="form-control" value="{{ book.title if book else '' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="author" class="form-label">作者</label>
+                            <input type="text" name="author" id="author" class="form-control" value="{{ book.author if book else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="isbn" class="form-label">ISBN</label>
+                            <input type="text" name="isbn" id="isbn" class="form-control" value="{{ book.isbn if book else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="category" class="form-label">分類</label>
+                            <input type="text" name="category" id="category" class="form-control" value="{{ book.category if book else '' }}" placeholder="如：文學、科技">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">當前狀態</label>
+                            <input type="text" class="form-control bg-light" value="{{ '在庫' if not book or book.status == 'Available' else '已借出' }}" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-5 d-flex justify-content-between">
+                        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary px-4">取消返回</a>
+                        <button type="submit" class="btn btn-primary px-5">儲存書籍</button>
+                    </div>
+                </form>
+
+                {% if action == 'Edit' %}
+                <hr class="my-5">
+                <div class="bg-light p-4 rounded border">
+                    <h5 class="text-danger fw-bold">危險區域</h5>
+                    <p class="small text-muted">刪除書籍後將無法復原，請謹慎操作。</p>
+                    <form action="{{ url_for('admin.delete_book', book_id=book.id) }}" method="POST" onsubmit="return confirm('確定要從館藏中永久刪除這本書嗎？');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">永久刪除此書籍</button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
